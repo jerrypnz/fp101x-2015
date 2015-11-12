@@ -25,10 +25,10 @@ e9 [x, y] = (x, True)
 
 e10 (x, y) = [x, y]
 
-e13 :: Int -> Int -> Int
+-- e13 :: Int -> Int -> Int
 e13 x y = x + y * y
 
 -- For fun: defining reduce with recursion
-reduce' :: (a -> b -> a) -> a -> [b] -> a
+-- reduce' :: (a -> b -> a) -> a -> [b] -> a
 reduce' _ n [] = n
 reduce' f n (x:xs) = reduce' f (f n x) xs
