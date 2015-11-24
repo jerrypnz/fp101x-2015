@@ -55,21 +55,56 @@ data JsVal = JsObject [(String, JsVal)]
            | JsArray [JsVal]
            | JsString String
            | JsInteger Int
-           | JsDouble Double
+           | JsBoolean Bool
+           | JsNull
            deriving Show
 
 skipSpace :: Parser String
-skipSpace = (many $ sat isSpace)
+skipSpace = many $ sat isSpace
 
 escapeChar :: Parser Char
 escapeChar  = do char '\\'
                  c <- item
                  return $ case c of
-                   'n' -> '\n'
-                   _   -> c
+                   'n'  -> '\n'
+                   'r'  -> '\r'
+                   'b'  -> '\b'
+                   't'  -> '\t'
+                   '\\' -> '\\'
+                   _    -> c
+
+commaSeparated  :: Parser a -> Parser [a]
+commaSeparated p = do skipSpace
+                      elems <- (do e  <- p
+                                   es <- many (do skipSpace
+                                                  char ','
+                                                  skipSpace
+                                                  p)
+                                   return $ e:es) +++ return []
+                      skipSpace
+                      return elems
+
+keyValuePair  :: Parser a -> Parser (String, a)
+keyValuePair p = do skipSpace
+                    JsString key <- jsString
+                    skipSpace
+                    char ':'
+                    skipSpace
+                    val <- p
+                    return (key, val)
 
 json :: Parser JsVal
-json = jsInt +++ jsString +++ jsArray
+json  = jsInt +++ jsString +++ jsArray +++ jsObject +++ jsBoolean +++ jsNull
+
+jsNull :: Parser JsVal
+jsNull  = do string "null"
+             return JsNull
+
+jsBoolean :: Parser JsVal
+jsBoolean  = (do string "true"
+                 return $ JsBoolean True) +++
+             (do string "false"
+                 return $ JsBoolean False)
 
 jsString :: Parser JsVal
 jsString  = do char '"'
@@ -78,17 +113,18 @@ jsString  = do char '"'
                return $ JsString s
 
 jsInt :: Parser JsVal
-jsInt = do s  <- digit
-           ss <- (many digit)
-           return $ JsInteger (read (s:ss)::Int)
+jsInt  = do s  <- digit
+            ss <- (many digit)
+            return $ JsInteger (read (s:ss)::Int)
 
 jsArray :: Parser JsVal
-jsArray = do char '['
-             skipSpace
-             s <- json
-             ss <- many (do skipSpace
-                            char ','
-                            skipSpace
-                            json)
-             char ']'
-             return $ JsArray (s:ss)
+jsArray  = do char '['
+              elems <- commaSeparated json
+              char ']'
+              return $ JsArray elems
+
+jsObject :: Parser JsVal
+jsObject  = do char '{'
+               kvs <- commaSeparated $ keyValuePair json
+               char '}'
+               return $ JsObject kvs
