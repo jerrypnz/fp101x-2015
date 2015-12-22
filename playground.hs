@@ -32,3 +32,5 @@ e13 x y = x + y * y
 -- reduce' :: (a -> b -> a) -> a -> [b] -> a
 reduce' _ n [] = n
 reduce' f n (x:xs) = reduce' f (f n x) xs
+
+ones = 1 : ones

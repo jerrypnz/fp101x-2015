@@ -167,16 +167,16 @@ mapM' f = foldr (\x acc -> do a  <- f x
 filterM' :: Monad m => (a -> m Bool) -> [a] -> m [a]
 
 -- Try implementing one myself
--- filterM' p = foldr (\x acc -> do y  <- p x
---                                  xs <- acc
---                                  return $ if y then (x:xs) else xs)
---                    (return [])
+filterM' p = foldr (\x acc -> do y  <- p x
+                                 xs <- acc
+                                 return $ if y then (x:xs) else xs)
+                   (return [])
 
-filterM' _ [] = return []
-filterM' p (x:xs)
-  = do flag <- p x
-       ys   <- filterM' p xs
-       if flag then return (x:ys) else return ys
+-- filterM' _ [] = return []
+-- filterM' p (x:xs)
+--   = do flag <- p x
+--        ys   <- filterM' p xs
+--        if flag then return (x:ys) else return ys
 
 foldLeftM :: Monad m => (a -> b -> m a) -> a -> [b] -> m a
 foldLeftM _ a [] = return a
